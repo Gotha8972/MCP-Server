@@ -1,0 +1,14 @@
+[project]
+name = "splitwise-mcp"
+version = "1.0.0"
+description = "Custom MCP server for querying Splitwise expenses and spending by category"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp",
+    "splitwise",
+    "python-dotenv",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends._legacy:_Backend"

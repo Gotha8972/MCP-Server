@@ -1,0 +1,4 @@
+fastmcp
+splitwise
+python-dotenv
+uvicorn

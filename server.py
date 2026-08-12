@@ -42,10 +42,10 @@ mcp = FastMCP("Splitwise MCP", instructions=(
 
 
 # ---------------------------------------------------------------------------
-# Custom Routes for Web/Cloud Discovery (e.g. Gemini Connected Apps)
+# Custom Routes for Cloud Discovery (Gemini Connected Apps & Web MCP Clients)
 # ---------------------------------------------------------------------------
 
-@mcp.custom_route("/", methods=["GET", "HEAD"])
+@mcp.custom_route("/", methods=["GET", "POST", "HEAD"])
 async def root_route(request):
     """Health check and discovery endpoint for cloud clients."""
     from starlette.responses import JSONResponse
@@ -62,9 +62,32 @@ async def root_route(request):
 
 @mcp.custom_route("/mcp", methods=["GET", "POST", "HEAD"])
 async def mcp_route(request):
-    """Redirect /mcp calls to /sse."""
-    from starlette.responses import RedirectResponse
-    return RedirectResponse(url="/sse", status_code=307)
+    """Discovery endpoint for /mcp probes."""
+    from starlette.responses import JSONResponse
+    return JSONResponse({
+        "status": "online",
+        "name": "Splitwise MCP Server",
+        "protocol": "MCP",
+        "sse_endpoint": "/sse",
+    })
+
+
+@mcp.custom_route("/sse", methods=["POST", "HEAD"])
+async def sse_post_route(request):
+    """Allow POST /sse probes to succeed with 200 OK."""
+    from starlette.responses import JSONResponse
+    return JSONResponse({"status": "ok"})
+
+
+@mcp.custom_route("/.well-known/oauth-protected-resource", methods=["GET", "POST", "HEAD"])
+@mcp.custom_route("/.well-known/oauth-protected-resource/mcp", methods=["GET", "POST", "HEAD"])
+async def oauth_protected_resource(request):
+    """OAuth discovery probe handler for connected app clients."""
+    from starlette.responses import JSONResponse
+    return JSONResponse({
+        "resource": "https://mcp-server-i2sp.onrender.com",
+        "authorization_servers": []
+    })
 
 
 def _get_client() -> Splitwise:

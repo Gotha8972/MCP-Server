@@ -41,6 +41,32 @@ mcp = FastMCP("Splitwise MCP", instructions=(
 ))
 
 
+# ---------------------------------------------------------------------------
+# Custom Routes for Web/Cloud Discovery (e.g. Gemini Connected Apps)
+# ---------------------------------------------------------------------------
+
+@mcp.custom_route("/", methods=["GET", "HEAD"])
+async def root_route(request):
+    """Health check and discovery endpoint for cloud clients."""
+    from starlette.responses import JSONResponse
+    return JSONResponse({
+        "status": "online",
+        "name": "Splitwise MCP Server",
+        "protocol": "MCP",
+        "endpoints": {
+            "sse": "/sse",
+            "mcp": "/mcp",
+        }
+    })
+
+
+@mcp.custom_route("/mcp", methods=["GET", "POST", "HEAD"])
+async def mcp_route(request):
+    """Redirect /mcp calls to /sse."""
+    from starlette.responses import RedirectResponse
+    return RedirectResponse(url="/sse", status_code=307)
+
+
 def _get_client() -> Splitwise:
     """Return an authenticated Splitwise client."""
     if not all([CONSUMER_KEY, CONSUMER_SECRET, API_KEY]):

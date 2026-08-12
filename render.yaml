@@ -3,7 +3,7 @@ services:
     name: splitwise-mcp
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: fastmcp run --transport sse --host 0.0.0.0 --port $PORT server.py
+    startCommand: python server.py
     envVars:
       - key: SPLITWISE_CONSUMER_KEY
         sync: false

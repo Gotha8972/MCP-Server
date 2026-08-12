@@ -45,38 +45,16 @@ mcp = FastMCP("Splitwise MCP", instructions=(
 # Custom Routes for Cloud Discovery (Gemini Connected Apps & Web MCP Clients)
 # ---------------------------------------------------------------------------
 
-@mcp.custom_route("/", methods=["GET", "POST", "HEAD"])
+@mcp.custom_route("/", methods=["GET", "HEAD"])
 async def root_route(request):
     """Health check and discovery endpoint for cloud clients."""
     from starlette.responses import JSONResponse
     return JSONResponse({
         "status": "online",
         "name": "Splitwise MCP Server",
-        "protocol": "MCP",
-        "endpoints": {
-            "sse": "/sse",
-            "mcp": "/mcp",
-        }
+        "protocol": "MCP (streamable-http)",
+        "endpoint": "/mcp",
     })
-
-
-@mcp.custom_route("/mcp", methods=["GET", "POST", "HEAD"])
-async def mcp_route(request):
-    """Discovery endpoint for /mcp probes."""
-    from starlette.responses import JSONResponse
-    return JSONResponse({
-        "status": "online",
-        "name": "Splitwise MCP Server",
-        "protocol": "MCP",
-        "sse_endpoint": "/sse",
-    })
-
-
-@mcp.custom_route("/sse", methods=["POST", "HEAD"])
-async def sse_post_route(request):
-    """Allow POST /sse probes to succeed with 200 OK."""
-    from starlette.responses import JSONResponse
-    return JSONResponse({"status": "ok"})
 
 
 @mcp.custom_route("/.well-known/oauth-protected-resource", methods=["GET", "POST", "HEAD"])
@@ -428,8 +406,8 @@ if __name__ == "__main__":
     if any(arg in sys.argv for arg in ["stdio", "--stdio"]):
         mcp.run(transport="stdio")
     else:
-        # Web / SSE mode for cloud hosting (Render, Gemini Connected Apps)
+        # Streamable-HTTP mode for cloud hosting — this is what Gemini Connected Apps uses.
+        # It serves the MCP JSON-RPC protocol natively at POST /mcp.
         port = int(os.getenv("PORT", "8000"))
-        app = mcp.http_app(transport="sse")
-        app.mount("/mcp", mcp.http_app(transport="sse"))
+        app = mcp.http_app(transport="streamable-http")
         uvicorn.run(app, host="0.0.0.0", port=port)
